@@ -9,6 +9,22 @@ repositories {
     mavenCentral()
 }
 
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "org.example.MainKt"
+    }
+
+    from(sourceSets.main.get().output)
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    dependsOn(configurations.runtimeClasspath)
+
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
+}
+
 val exposedVersion: String by project
 
 dependencies {
@@ -28,6 +44,7 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
     jvmToolchain(17)
 }
