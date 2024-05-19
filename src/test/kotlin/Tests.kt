@@ -147,6 +147,16 @@ class BanksTests {
     }
 
     @Test
+    fun `remove unknown cashback category`() {
+        transaction(database) {
+            addBank(bank)
+            addCard(card)
+            addCashback(category)
+            assertFails { removeCashback(card.name, category.period, "unknown") }
+        }
+    }
+
+    @Test
     fun `test current cashback category uniqueness`() {
         transaction(database) {
             addBank(bank)
