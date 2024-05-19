@@ -41,20 +41,20 @@ fun removeCashback(cardName: String, categoryName: String) {
 fun transaction(cardName: String, categoryName: String, value: Double) {
     val card = findCard(cardName)
 
+    val limit = card.bank.limit ?: return
+
     val category = card.getCashbackCategory(categoryName)
         ?: throw IllegalArgumentException("Category not found")
 
     val cashback = category.percent * value
 
-    val newLimit = card.bank.limit - cashback
+    val newLimit = limit - cashback
 
     modifyLimit(card.bank.name, newLimit)
 }
 
 fun estimateCashback() {
-    getAllBanks().forEach { bank ->
-        println("${bank.name} ${bank.limit}")
-    }
+    getAllBanks().forEach { println(it) }
 }
 
 fun choose(categoryName: String, value: Double) {
@@ -62,5 +62,6 @@ fun choose(categoryName: String, value: Double) {
 }
 
 fun listCards() {
-    TODO("Not yet implemented")
+    // iterate over banks and look for bank limit
+    // if bank limit is
 }
