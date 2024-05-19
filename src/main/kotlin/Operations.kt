@@ -25,6 +25,15 @@ class FutureMonthProvider(private var yearMonth: YearMonth) : MonthProvider {
 class CashbackService(
     private val monthProvider: MonthProvider = DefaultMonthProvider,
 ) {
+    private fun getIntPeriod(period: String): Int {
+        val currentMonth = monthProvider.getYearMonth()
+        return when (period) {
+            "current" -> currentMonth
+            "future" -> currentMonth.plusMonths(1)
+            else -> throw IllegalArgumentException("Invalid period")
+        }.monthValue
+    }
+
     fun addBank(bank: BankDTO): Bank =
         Bank.new {
             name = bank.name
@@ -38,12 +47,7 @@ class CashbackService(
         }
 
     fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
-        val currentMonth = monthProvider.getYearMonth()
-        val period = when (category.period) {
-            "current" -> currentMonth
-            "future" -> currentMonth.plusMonths(1)
-            else -> throw IllegalArgumentException("Invalid period")
-        }.monthValue
+        val period = getIntPeriod(category.period)
 
         val card = findCard(category.cardName)
 
@@ -61,12 +65,7 @@ class CashbackService(
     fun removeCashback(cardName: String, period: String, categoryName: String) {
         val card = findCard(cardName)
 
-        val currentMonth = monthProvider.getYearMonth()
-        val periodValue = when (period) {
-            "current" -> currentMonth
-            "future" -> currentMonth.plusMonths(1)
-            else -> throw IllegalArgumentException("Invalid period")
-        }.monthValue
+        val periodValue = getIntPeriod(period)
 
         val category = getCashbackCategories(card)
             .firstOrNull { it.name == categoryName && it.period == periodValue }
