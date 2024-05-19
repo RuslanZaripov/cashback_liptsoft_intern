@@ -321,4 +321,33 @@ class BanksTests {
             assertTrue { cardCategories != null }
         }
     }
+
+    @Test
+    fun `test cashback limit reset for future`() {
+        transaction(database) {
+
+            future_service.addBank(bank)
+            future_service.addCard(card)
+            future_service.addCashback(category)
+            future_service.addCashback(categoryFuture)
+
+            val value = 1000.0
+
+            future_service.transaction(card.name, category.name, value)
+
+            monthProvider.advanceMonth()
+
+            var remainingLimit = future_service.getCurrentRemainingLimit(bank.name)
+
+            assertTrue { remainingLimit == bank.limit }
+
+            future_service.transaction(card.name, categoryFuture.name, value)
+
+            remainingLimit = future_service.getCurrentRemainingLimit(bank.name)
+
+            val calculated = bank.limit!! - value * (categoryFuture.percent / 100)
+
+            assertTrue { remainingLimit == calculated }
+        }
+    }
 }

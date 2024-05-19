@@ -1,6 +1,7 @@
 package org.example
 
 import org.example.domain.*
+import org.jetbrains.exposed.sql.insertAndGetId
 import java.time.YearMonth
 
 interface MonthProvider {
@@ -37,8 +38,6 @@ class CashbackService(
         }
 
     fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
-        // take current month value as period
-
         val currentMonth = monthProvider.getYearMonth()
         val period = when (category.period) {
             "current" -> currentMonth
@@ -48,19 +47,15 @@ class CashbackService(
 
         val card = findCard(category.cardName)
 
-        val categories = getCashbackCategories(card)
-
-        if (categories.any { it.name == category.name }) {
-            throw IllegalArgumentException("Category already exists")
+        val insertedId = CashbackCategories.insertAndGetId {
+            it[this.name] = category.name
+            it[this.percent] = category.percent
+            it[this.permanent] = category.permanent
+            it[this.period] = period
+            it[this.card] = card.id
         }
 
-        return CashbackCategory.new {
-            this.name = category.name
-            this.period = period
-            this.percent = category.percent
-            this.permanent = category.permanent
-            this.cards = card
-        }
+        return CashbackCategory.findById(insertedId)!!
     }
 
     fun removeCashback(cardName: String, period: String, categoryName: String) {
