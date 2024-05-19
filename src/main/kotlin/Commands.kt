@@ -105,13 +105,13 @@ class ChooseCard : Subcommand("choose-card", "Choose card") {
 // remove current cashback <card name> <category>
 // remove future cashback <card name> <category>
 class RemoveCashback : Subcommand("remove-cashback", "Remove cashback") {
-    private val period by option(ArgType.String, "period", "period").required()
+    private val period by option(ArgType.Choice(listOf("current", "future"), { it }), "period", "period").required()
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
     private val category by option(ArgType.String, "category", "category name").required()
 
     override fun execute(): Unit = runBlocking {
         println("remove cashback from $period $cardName $category")
 
-        dbQuery { removeCashback(cardName, category) }
+        dbQuery { removeCashback(cardName, period, category) }
     }
 }

@@ -21,7 +21,6 @@ fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
     // take current month value as period
 
     val currentMonth = LocalDate.now()
-
     val period = when (category.period) {
         "current" -> currentMonth
         "future" -> currentMonth.plusMonths(1)
@@ -45,8 +44,21 @@ fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
     }
 }
 
-fun removeCashback(cardName: String, categoryName: String) {
-    TODO("Not yet implemented")
+fun removeCashback(cardName: String, period: String, categoryName: String) {
+    val card = findCard(cardName)
+
+    val currentMonth = LocalDate.now()
+    val periodValue = when (period) {
+        "current" -> currentMonth
+        "future" -> currentMonth.plusMonths(1)
+        else -> throw IllegalArgumentException("Invalid period")
+    }.monthValue
+
+    val category = card.getCashbackCategories()
+        .firstOrNull { it.name == categoryName && it.period == periodValue }
+        ?: throw IllegalArgumentException("Category not found")
+
+    category.delete()
 }
 
 
@@ -55,7 +67,7 @@ fun transaction(cardName: String, categoryName: String, value: Double) {
 
     val limit = card.bank.limit ?: return
 
-    val category = card.getCashbackCategory(categoryName)
+    val category = card.getCurrentCashbackCategory(categoryName)
         ?: throw IllegalArgumentException("Category not found")
 
     val cashback = category.percent * value
@@ -77,7 +89,7 @@ fun choose(categoryName: String, value: Double): Card? {
                 .filter { it.getCashbackCategories().any { category -> category.name == categoryName } }
         }
         .flatten()
-        .maxByOrNull { it.getCashbackCategory(categoryName)!!.percent }
+        .maxByOrNull { it.getCurrentCashbackCategory(categoryName)!!.percent }
 }
 
 fun listCards() {

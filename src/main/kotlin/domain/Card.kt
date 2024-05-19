@@ -4,6 +4,7 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
+import java.time.LocalDate
 
 object Cards : IntIdTable() {
     val name = varchar("name", 50).uniqueIndex()
@@ -32,6 +33,6 @@ fun Card.getCashbackCategories() =
         .find { CashbackCategories.card eq id }
         .toList()
 
-fun Card.getCashbackCategory(categoryName: String): CashbackCategory? =
+fun Card.getCurrentCashbackCategory(categoryName: String): CashbackCategory? =
     getCashbackCategories()
-        .firstOrNull { it.name == categoryName }
+        .firstOrNull { it.name == categoryName && it.period == LocalDate.now().monthValue }
