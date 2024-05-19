@@ -21,13 +21,28 @@ val dataSource = PGSimpleDataSource().apply {
 val database = Database.connect(dataSource)
 
 class BanksTests {
-    private val bank = BankDTO("Сбербанк", 1000.0)
-    private val bank2 = BankDTO("Альфа-Банк", 2000.0)
+    private val bank = BankDTO("Тинькофф", 5000.0)
+    private val bank2 = BankDTO("Банк Санкт-Петербург", 3000.0)
+    private val bank3 = BankDTO("Альфа", 2000.0)
 
-    private val card = CardDTO("Сбербанк Black", "Сбербанк")
-    private val card2 = CardDTO("Сбербанк Platinum", "Сбербанк")
+    private val card = CardDTO("МИР", "Тинькофф")
+    private val card2 = CardDTO("Банк Санкт-Петербург", "Банк Санкт-Петербург")
+    private val card3 = CardDTO("Альфа Кредитка", "Альфа")
+    private val card4 = CardDTO("Альфа Мир", "Альфа")
 
-    private val category = CashbackCategoryDTO("Еда", 5, false, "Сбербанк Black")
+    private val category = CashbackCategoryDTO("Рестораны", 5.0, false, "МИР")
+    private val category2 = CashbackCategoryDTO("Дом и Ремонт", 5.0, false, "МИР")
+    private val category3 = CashbackCategoryDTO("Остальное", 1.0, true, "МИР")
+
+    private val category4 = CashbackCategoryDTO("ЖД билеты", 7.0, true, "Банк Санкт-Петербург")
+    private val category5 = CashbackCategoryDTO("Остальное", 1.5, true, "Банк Санкт-Петербург")
+
+    private val category6 = CashbackCategoryDTO("Рестораны", 3.0, false, "Альфа Кредитка")
+    private val category7 = CashbackCategoryDTO("Заправки", 5.0, true, "Альфа Кредитка")
+
+    private val category8 = CashbackCategoryDTO("Заправки", 5.0, false, "Альфа МИР")
+    private val category9 = CashbackCategoryDTO("ЖД билеты", 3.0, false, "Альфа МИР")
+    private val category10 = CashbackCategoryDTO("Остальное", 1.0, true, "Альфа МИР")
 
     @BeforeEach
     fun resetDB() {

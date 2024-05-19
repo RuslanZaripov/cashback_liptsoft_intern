@@ -40,7 +40,7 @@ class AddCashback : Subcommand("add-cashback", "Add cashback category for card")
     private val period by option(ArgType.String, "period", "period").required()
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
     private val category by option(ArgType.String, "category", "category name").required()
-    private val percent by option(ArgType.Int, "percent", "percent").required()
+    private val percent by option(ArgType.Double, "percent", "percent").required()
     private val permanent by option(ArgType.Boolean, "permanent", "percent").default(false)
 
 

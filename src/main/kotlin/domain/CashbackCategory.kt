@@ -8,7 +8,7 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 
 object CashbackCategories : IntIdTable() {
     val name = varchar("category", 50).uniqueIndex()
-    val percent = integer("percent")
+    val percent = double("percent")
     val permanent = bool("permanent")
     val card = reference("card", Cards)
 }
@@ -25,7 +25,7 @@ class CashbackCategory(id: EntityID<Int>) : IntEntity(id) {
 
 data class CashbackCategoryDTO(
     val name: String,
-    val percent: Int,
+    val percent: Double,
     val permanent: Boolean,
     val cardName: String,
 )
