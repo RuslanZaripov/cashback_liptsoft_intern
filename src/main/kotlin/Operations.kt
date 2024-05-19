@@ -12,6 +12,15 @@ object DefaultMonthProvider : MonthProvider {
     override fun getYearMonth(): YearMonth = YearMonth.now()
 }
 
+class FutureMonthProvider(private var yearMonth: YearMonth) : MonthProvider {
+    override fun getYearMonth(): YearMonth = yearMonth
+
+    fun advanceMonth() {
+        yearMonth = yearMonth.plusMonths(1)
+    }
+}
+
+
 class CashbackService(
     private val monthProvider: MonthProvider = DefaultMonthProvider,
 ) {
@@ -39,7 +48,7 @@ class CashbackService(
 
         val card = findCard(category.cardName)
 
-        val categories = card.getCashbackCategories()
+        val categories = getCashbackCategories(card)
 
         if (categories.any { it.name == category.name }) {
             throw IllegalArgumentException("Category already exists")
@@ -64,7 +73,7 @@ class CashbackService(
             else -> throw IllegalArgumentException("Invalid period")
         }.monthValue
 
-        val category = card.getCashbackCategories()
+        val category = getCashbackCategories(card)
             .firstOrNull { it.name == categoryName && it.period == periodValue }
             ?: throw IllegalArgumentException("Category not found")
 
@@ -76,7 +85,7 @@ class CashbackService(
 
         val limit = card.bank.limit ?: return
 
-        val category = card.getCurrentCashbackCategory(categoryName)
+        val category = getCurrentCashbackCategory(card, categoryName)
             ?: throw IllegalArgumentException("Category not found")
 
         val cashback = (category.percent / 100) * value
@@ -96,7 +105,7 @@ class CashbackService(
             }
             .map { bank ->
                 bank.getCards()
-                    .filter { it.getCashbackCategories().isNotEmpty() } // maybe card has no cashback categories
+                    .filter { getCashbackCategories(it).isNotEmpty() } // maybe card has no cashback categories
                     .toList()
             }
             .flatten()
@@ -115,10 +124,10 @@ class CashbackService(
             }
             .map { bank ->
                 bank.getCards()
-                    .filter { it.getCashbackCategories().any { category -> category.name == categoryName } }
+                    .filter { getCashbackCategories(it).any { category -> category.name == categoryName } }
             }
             .flatten()
-            .maxByOrNull { it.getCurrentCashbackCategory(categoryName)!!.percent }
+            .maxByOrNull { getCurrentCashbackCategory(it, categoryName)!!.percent }
     }
 
     fun listCards(): List<Card> {
@@ -130,7 +139,7 @@ class CashbackService(
             }
             .map { bank ->
                 bank.getCards()
-                    .filter { it.getCashbackCategories().isNotEmpty() }
+                    .filter { getCashbackCategories(it).isNotEmpty() }
             }
             .flatten()
     }
@@ -141,4 +150,11 @@ class CashbackService(
 
     fun convertPeriod(period: Int): String =
         if (period == monthProvider.getMonth()) "current" else "future"
+
+    fun getCashbackCategories(card: Card) =
+        CashbackCategory.find { CashbackCategories.card eq card.id }.toList()
+
+    fun getCurrentCashbackCategory(card: Card, categoryName: String): CashbackCategory? =
+        getCashbackCategories(card)
+            .find { it.name == categoryName && it.period == monthProvider.getMonth() }
 }

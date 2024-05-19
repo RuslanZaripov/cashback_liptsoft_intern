@@ -1,4 +1,5 @@
 import org.example.CashbackService
+import org.example.FutureMonthProvider
 import org.example.domain.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -6,6 +7,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
+import java.time.YearMonth
 import kotlin.test.assertFails
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -21,6 +23,9 @@ val database = Database.connect(dataSource)
 
 class BanksTests {
     private val service = CashbackService()
+
+    private val monthProvider = FutureMonthProvider(YearMonth.of(2024, 5))
+    private val future_service = CashbackService(monthProvider)
 
     private val bank = BankDTO("Тинькофф", 5000.0)
     private val bank2 = BankDTO("Банк Санкт-Петербург", 3000.0)
@@ -111,20 +116,20 @@ class BanksTests {
             val card = service.addCard(card)
             service.addCashback(category)
 
-            var cardCategories = card.getCashbackCategories()
+            var cardCategories = service.getCashbackCategories(card)
 
             assertTrue { cardCategories.isNotEmpty() and (cardCategories.size == 1) }
             expect(category) { cardCategories[0].toDTO(service) }
 
-            assertTrue { card.getCurrentCashbackCategory(category.name) != null }
-            expect(category) { card.getCurrentCashbackCategory(category.name)!!.toDTO(service) }
+            assertTrue { service.getCurrentCashbackCategory(card, category.name) != null }
+            expect(category) { service.getCurrentCashbackCategory(card, category.name)!!.toDTO(service) }
 
             service.removeCashback(card.name, category.period, category.name)
 
-            cardCategories = card.getCashbackCategories()
+            cardCategories = service.getCashbackCategories(card)
 
             assertTrue { cardCategories.isEmpty() }
-            assertTrue { card.getCurrentCashbackCategory(category.name) == null }
+            assertTrue { service.getCurrentCashbackCategory(card, category.name) == null }
         }
     }
 
@@ -136,19 +141,19 @@ class BanksTests {
             val card = service.addCard(card)
             service.addCashback(categoryFuture)
 
-            var cardCategories = card.getCashbackCategories()
+            var cardCategories = service.getCashbackCategories(card)
 
             assertTrue { cardCategories.isNotEmpty() and (cardCategories.size == 1) }
             expect(categoryFuture) { cardCategories[0].toDTO(service) }
 
-            assertTrue { card.getCurrentCashbackCategory(categoryFuture.name) == null }
+            assertTrue { service.getCurrentCashbackCategory(card, categoryFuture.name) == null }
 
             service.removeCashback(card.name, categoryFuture.period, categoryFuture.name)
 
-            cardCategories = card.getCashbackCategories()
+            cardCategories = service.getCashbackCategories(card)
 
             assertTrue { cardCategories.isEmpty() }
-            assertTrue { card.getCurrentCashbackCategory(categoryFuture.name) == null }
+            assertTrue { service.getCurrentCashbackCategory(card, categoryFuture.name) == null }
         }
     }
 
@@ -297,6 +302,23 @@ class BanksTests {
 
             assertTrue { b[2].first.toDTO() == card3 }
             assertTrue { b[2].second == bank3.limit!! - 1000.0 * (category6.percent / 100) }
+        }
+    }
+
+    @Test
+    fun `test future cashback category in next month`() {
+        transaction(database) {
+            future_service.addBank(bank)
+            future_service.addCard(card)
+            future_service.addCashback(categoryFuture)
+
+            monthProvider.advanceMonth()
+
+            val card = findCard(card.name)
+
+            val cardCategories = future_service.getCurrentCashbackCategory(card, categoryFuture.name)
+
+            assertTrue { cardCategories != null }
         }
     }
 }

@@ -4,7 +4,6 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
-import java.time.LocalDate
 
 object Cards : IntIdTable() {
     val name = varchar("name", 50).uniqueIndex()
@@ -27,12 +26,3 @@ fun Card.toDTO() = CardDTO(name, bank.name)
 fun findCard(cardName: String) =
     Card.find { Cards.name eq cardName }.firstOrNull()
         ?: throw IllegalArgumentException("Card not found")
-
-fun Card.getCashbackCategories() =
-    CashbackCategory
-        .find { CashbackCategories.card eq id }
-        .toList()
-
-fun Card.getCurrentCashbackCategory(categoryName: String): CashbackCategory? =
-    getCashbackCategories()
-        .firstOrNull { it.name == categoryName && it.period == LocalDate.now().monthValue }
