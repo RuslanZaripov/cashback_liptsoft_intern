@@ -48,7 +48,7 @@ class AddCashback : Subcommand("add-cashback", "Add cashback category for card")
         println("add category $category for $cardName with $percent [$permanent] $period")
 
         // TODO: add period
-        dbQuery { addCashback(CashbackCategoryDTO(category, period, percent, permanent, cardName)) }
+        dbQuery { addCashback(CashbackCategoryDTO(category, percent, permanent, cardName, period)) }
     }
 }
 

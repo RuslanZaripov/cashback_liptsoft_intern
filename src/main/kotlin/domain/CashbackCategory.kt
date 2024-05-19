@@ -31,8 +31,8 @@ class CashbackCategory(id: EntityID<Int>) : IntEntity(id) {
 
 data class CashbackCategoryDTO(
     val name: String,
-    val period: String,
     val percent: Double,
     val permanent: Boolean,
     val cardName: String,
+    val period: String = "current",
 )
