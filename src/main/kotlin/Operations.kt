@@ -1,6 +1,7 @@
 package org.example
 
 import org.example.domain.*
+import java.time.LocalDate
 
 fun addBank(bank: BankDTO): Bank =
     Bank.new {
@@ -17,6 +18,16 @@ fun addCard(card: CardDTO): Card =
 
 
 fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
+    // take current month value as period
+
+    val currentMonth = LocalDate.now()
+
+    val period = when (category.period) {
+        "current" -> currentMonth
+        "future" -> currentMonth.plusMonths(1)
+        else -> throw IllegalArgumentException("Invalid period")
+    }.monthValue
+
     val card = findCard(category.cardName)
 
     val categories = card.getCashbackCategories()
@@ -26,10 +37,11 @@ fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
     }
 
     return CashbackCategory.new {
-        name = category.name
-        percent = category.percent
-        permanent = category.permanent
-        cards = card
+        this.name = category.name
+        this.period = period
+        this.percent = category.percent
+        this.permanent = category.permanent
+        this.cards = card
     }
 }
 

@@ -37,7 +37,7 @@ class AddCard : Subcommand("add-card", "Add card to database") {
 // add current-cashback <card name> <category> <percent> [permanent]
 // add future-cashback <card name> <category> <percent> [permanent]
 class AddCashback : Subcommand("add-cashback", "Add cashback category for card") {
-    private val period by option(ArgType.String, "period", "period").required()
+    private val period by option(ArgType.Choice(listOf("current", "future"), { it }), "period", "period").required()
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
     private val category by option(ArgType.String, "category", "category name").required()
     private val percent by option(ArgType.Double, "percent", "percent").required()
@@ -48,7 +48,7 @@ class AddCashback : Subcommand("add-cashback", "Add cashback category for card")
         println("add category $category for $cardName with $percent [$permanent] $period")
 
         // TODO: add period
-        dbQuery { addCashback(CashbackCategoryDTO(category, percent, permanent, cardName)) }
+        dbQuery { addCashback(CashbackCategoryDTO(category, period, percent, permanent, cardName)) }
     }
 }
 

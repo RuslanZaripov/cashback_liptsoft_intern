@@ -21,6 +21,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
 
     implementation("org.postgresql:postgresql:42.7.2")
+
+    runtimeOnly("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 }
 
 tasks.test {
