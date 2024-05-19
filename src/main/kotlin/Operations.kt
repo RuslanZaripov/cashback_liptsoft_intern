@@ -1,9 +1,20 @@
 package org.example
 
 import org.example.domain.*
-import java.time.LocalDate
+import java.time.YearMonth
 
-class CashbackService {
+interface MonthProvider {
+    fun getYearMonth(): YearMonth
+    fun getMonth(): Int = getYearMonth().monthValue
+}
+
+object DefaultMonthProvider : MonthProvider {
+    override fun getYearMonth(): YearMonth = YearMonth.now()
+}
+
+class CashbackService(
+    private val monthProvider: MonthProvider = DefaultMonthProvider,
+) {
     fun addBank(bank: BankDTO): Bank =
         Bank.new {
             name = bank.name
@@ -19,7 +30,7 @@ class CashbackService {
     fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
         // take current month value as period
 
-        val currentMonth = LocalDate.now()
+        val currentMonth = monthProvider.getYearMonth()
         val period = when (category.period) {
             "current" -> currentMonth
             "future" -> currentMonth.plusMonths(1)
@@ -46,7 +57,7 @@ class CashbackService {
     fun removeCashback(cardName: String, period: String, categoryName: String) {
         val card = findCard(cardName)
 
-        val currentMonth = LocalDate.now()
+        val currentMonth = monthProvider.getYearMonth()
         val periodValue = when (period) {
             "current" -> currentMonth
             "future" -> currentMonth.plusMonths(1)
@@ -71,13 +82,13 @@ class CashbackService {
         val cashback = (category.percent / 100) * value
 
         // format time in yyyy-MM
-        val period = LocalDate.now().toString().substring(0, 7)
+        val period = monthProvider.getYearMonth().toString()
 
         spendMoney(card.bank.name, period, cashback)
     }
 
     fun estimateCashback(): List<Pair<Card, Double?>> {
-        val period = LocalDate.now().toString().substring(0, 7)
+        val period = monthProvider.getYearMonth().toString()
         return getAllBanks()
             .filter {
                 val a = getRemainingLimit(it.name, period)
@@ -96,7 +107,7 @@ class CashbackService {
     }
 
     fun choose(categoryName: String, value: Double): Card? {
-        val period = LocalDate.now().toString().substring(0, 7)
+        val period = monthProvider.getYearMonth().toString()
         return getAllBanks()
             .filter {
                 val a = getRemainingLimit(it.name, period)
@@ -111,7 +122,7 @@ class CashbackService {
     }
 
     fun listCards(): List<Card> {
-        val period = LocalDate.now().toString().substring(0, 7)
+        val period = monthProvider.getYearMonth().toString()
         return getAllBanks()
             .filter {
                 val a = getRemainingLimit(it.name, period)
@@ -123,4 +134,11 @@ class CashbackService {
             }
             .flatten()
     }
+
+    fun getCurrentRemainingLimit(bankName: String): Double? {
+        return getRemainingLimit(bankName, monthProvider.getYearMonth().toString())
+    }
+
+    fun convertPeriod(period: Int): String =
+        if (period == monthProvider.getMonth()) "current" else "future"
 }

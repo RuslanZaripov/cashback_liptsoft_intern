@@ -114,10 +114,10 @@ class BanksTests {
             var cardCategories = card.getCashbackCategories()
 
             assertTrue { cardCategories.isNotEmpty() and (cardCategories.size == 1) }
-            expect(category) { cardCategories[0].toDTO() }
+            expect(category) { cardCategories[0].toDTO(service) }
 
             assertTrue { card.getCurrentCashbackCategory(category.name) != null }
-            expect(category) { card.getCurrentCashbackCategory(category.name)!!.toDTO() }
+            expect(category) { card.getCurrentCashbackCategory(category.name)!!.toDTO(service) }
 
             service.removeCashback(card.name, category.period, category.name)
 
@@ -139,7 +139,7 @@ class BanksTests {
             var cardCategories = card.getCashbackCategories()
 
             assertTrue { cardCategories.isNotEmpty() and (cardCategories.size == 1) }
-            expect(categoryFuture) { cardCategories[0].toDTO() }
+            expect(categoryFuture) { cardCategories[0].toDTO(service) }
 
             assertTrue { card.getCurrentCashbackCategory(categoryFuture.name) == null }
 
@@ -215,7 +215,7 @@ class BanksTests {
 
             service.transaction(card.name, category.name, value)
 
-            val remainingLimit = getCurrentRemainingLimit(bank.name)
+            val remainingLimit = service.getCurrentRemainingLimit(bank.name)
 
             val calculated = bank.limit!! - value * (category.percent / 100)
 

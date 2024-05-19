@@ -1,10 +1,10 @@
 package org.example.domain
 
+import org.example.CashbackService
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
-import java.time.LocalDate
 
 
 object CashbackCategories : IntIdTable() {
@@ -38,8 +38,5 @@ data class CashbackCategoryDTO(
     val period: String = "current",
 )
 
-fun convertPeriod(period: Int): String =
-    if (period == LocalDate.now().monthValue) "current" else "future"
-
-fun CashbackCategory.toDTO(): CashbackCategoryDTO =
-    CashbackCategoryDTO(name, percent, permanent, cards.name, convertPeriod(period))
+fun CashbackCategory.toDTO(service: CashbackService): CashbackCategoryDTO =
+    CashbackCategoryDTO(name, percent, permanent, cards.name, service.convertPeriod(period))

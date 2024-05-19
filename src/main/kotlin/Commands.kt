@@ -47,7 +47,6 @@ class AddCashback(private val service: CashbackService) : Subcommand("add-cashba
     override fun execute(): Unit = runBlocking {
         println("add category $category for $cardName with $percent [$permanent] $period")
 
-        // TODO: add period
         dbQuery { service.addCashback(CashbackCategoryDTO(category, percent, permanent, cardName, period)) }
     }
 }
@@ -93,11 +92,7 @@ class ChooseCard(private val service: CashbackService) : Subcommand("choose-card
 
         dbQuery {
             val card = service.choose(category, value)
-            if (card != null) {
-                println(card)
-            } else {
-                println("No card found")
-            }
+            if (card != null) println(card) else println("No card found")
         }
     }
 }
