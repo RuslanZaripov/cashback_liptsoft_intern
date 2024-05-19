@@ -10,15 +10,17 @@ fun main(args: Array<String>): Unit = runBlocking {
 
     val parser = ArgParser("cashback")
 
+    val service = CashbackService()
+
     parser.subcommands(
-        AddBank(),
-        AddCard(),
-        AddCashback(),
-        AddTransaction(),
-        CardList(),
-        EstimateCashback(),
-        ChooseCard(),
-        RemoveCashback()
+        AddBank(service),
+        AddCard(service),
+        AddCashback(service),
+        AddTransaction(service),
+        CardList(service),
+        EstimateCashback(service),
+        ChooseCard(service),
+        RemoveCashback(service)
     )
 
     parser.parse(args)

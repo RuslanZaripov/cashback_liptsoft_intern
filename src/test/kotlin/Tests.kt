@@ -1,4 +1,4 @@
-import org.example.*
+import org.example.CashbackService
 import org.example.domain.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -20,6 +20,8 @@ val dataSource = PGSimpleDataSource().apply {
 val database = Database.connect(dataSource)
 
 class BanksTests {
+    private val service = CashbackService()
+
     private val bank = BankDTO("Тинькофф", 5000.0)
     private val bank2 = BankDTO("Банк Санкт-Петербург", 3000.0)
     private val bank3 = BankDTO("Альфа", 2000.0)
@@ -67,22 +69,22 @@ class BanksTests {
     @Test
     fun `test bank addition`() {
         transaction(database) {
-            val bankEntity = addBank(bank)
+            val bankEntity = service.addBank(bank)
             expect(bank) { bankEntity.toDTO() }
         }
     }
 
     @Test
     fun `test bank uniqueness`() {
-        transaction(database) { addBank(bank) }
-        assertFails { transaction(database) { addBank(bank) } }
+        transaction(database) { service.addBank(bank) }
+        assertFails { transaction(database) { service.addBank(bank) } }
     }
 
     @Test
     fun `test card addition`() {
         transaction(database) {
-            addBank(bank)
-            val cardEntity = addCard(card)
+            service.addBank(bank)
+            val cardEntity = service.addCard(card)
             expect(card) { cardEntity.toDTO() }
         }
     }
@@ -90,24 +92,24 @@ class BanksTests {
     @Test
     fun `test card uniqueness`() {
         transaction(database) {
-            addBank(bank)
-            addCard(card)
+            service.addBank(bank)
+            service.addCard(card)
         }
-        assertFails { transaction(database) { addCard(card) } }
+        assertFails { transaction(database) { service.addCard(card) } }
     }
 
     @Test
     fun `test card addition with non-existent bank`() {
-        assertFails { transaction(database) { addCard(card) } }
+        assertFails { transaction(database) { service.addCard(card) } }
     }
 
     @Test
     fun `test current cashback category addition and remove`() {
         transaction(database) {
-            addBank(bank)
+            service.addBank(bank)
 
-            val card = addCard(card)
-            addCashback(category)
+            val card = service.addCard(card)
+            service.addCashback(category)
 
             var cardCategories = card.getCashbackCategories()
 
@@ -117,7 +119,7 @@ class BanksTests {
             assertTrue { card.getCurrentCashbackCategory(category.name) != null }
             expect(category) { card.getCurrentCashbackCategory(category.name)!!.toDTO() }
 
-            removeCashback(card.name, category.period, category.name)
+            service.removeCashback(card.name, category.period, category.name)
 
             cardCategories = card.getCashbackCategories()
 
@@ -129,10 +131,10 @@ class BanksTests {
     @Test
     fun `test future cashback category addition and remove`() {
         transaction(database) {
-            addBank(bank)
+            service.addBank(bank)
 
-            val card = addCard(card)
-            addCashback(categoryFuture)
+            val card = service.addCard(card)
+            service.addCashback(categoryFuture)
 
             var cardCategories = card.getCashbackCategories()
 
@@ -141,7 +143,7 @@ class BanksTests {
 
             assertTrue { card.getCurrentCashbackCategory(categoryFuture.name) == null }
 
-            removeCashback(card.name, categoryFuture.period, categoryFuture.name)
+            service.removeCashback(card.name, categoryFuture.period, categoryFuture.name)
 
             cardCategories = card.getCashbackCategories()
 
@@ -153,44 +155,44 @@ class BanksTests {
     @Test
     fun `remove unknown cashback category`() {
         transaction(database) {
-            addBank(bank)
-            addCard(card)
-            addCashback(category)
-            assertFails { removeCashback(card.name, category.period, "unknown") }
+            service.addBank(bank)
+            service.addCard(card)
+            service.addCashback(category)
+            assertFails { service.removeCashback(card.name, category.period, "unknown") }
         }
     }
 
     @Test
     fun `test current cashback category uniqueness`() {
         transaction(database) {
-            addBank(bank)
-            addCard(card)
-            addCashback(category)
-            assertFails { addCashback(category) }
+            service.addBank(bank)
+            service.addCard(card)
+            service.addCashback(category)
+            assertFails { service.addCashback(category) }
         }
     }
 
     private fun setup() {
         transaction(database) {
-            addBank(bank)
-            addBank(bank2)
-            addBank(bank3)
-            addBank(bank4)
+            service.addBank(bank)
+            service.addBank(bank2)
+            service.addBank(bank3)
+            service.addBank(bank4)
 
-            addCard(card)
-            addCard(card2)
-            addCard(card3)
-            addCard(card4)
-            addCard(card5)
+            service.addCard(card)
+            service.addCard(card2)
+            service.addCard(card3)
+            service.addCard(card4)
+            service.addCard(card5)
 
-            addCashback(category)
-            addCashback(category2)
-            addCashback(category3)
-            addCashback(category4)
-            addCashback(category5)
-            addCashback(category6)
-            addCashback(category7)
-            addCashback(category11)
+            service.addCashback(category)
+            service.addCashback(category2)
+            service.addCashback(category3)
+            service.addCashback(category4)
+            service.addCashback(category5)
+            service.addCashback(category6)
+            service.addCashback(category7)
+            service.addCashback(category11)
         }
     }
 
@@ -199,7 +201,7 @@ class BanksTests {
         setup()
 
         transaction(database) {
-            val a = listCards()
+            val a = service.listCards()
             assertTrue { a.size == 3 }
         }
     }
@@ -211,7 +213,7 @@ class BanksTests {
         transaction(database) {
             val value = 1000.0
 
-            transaction(card.name, category.name, value)
+            service.transaction(card.name, category.name, value)
 
             val remainingLimit = getCurrentRemainingLimit(bank.name)
 
@@ -226,7 +228,7 @@ class BanksTests {
         setup()
 
         transaction(database) {
-            assertFails { transaction("unknown", category.name, 1000.0) }
+            assertFails { service.transaction("unknown", category.name, 1000.0) }
         }
     }
 
@@ -235,7 +237,7 @@ class BanksTests {
         setup()
 
         transaction(database) {
-            assertFails { transaction(card.name, "unknown", 1000.0) }
+            assertFails { service.transaction(card.name, "unknown", 1000.0) }
         }
     }
 
@@ -244,10 +246,10 @@ class BanksTests {
         setup()
 
         transaction(database) {
-            val actualCard = choose(category.name, 1000.0)
+            val actualCard = service.choose(category.name, 1000.0)
             expect(card) { actualCard!!.toDTO() }
 
-            val actualCard2 = choose(category4.name, 1000.0)
+            val actualCard2 = service.choose(category4.name, 1000.0)
             expect(card2) { actualCard2!!.toDTO() }
         }
     }
@@ -257,7 +259,7 @@ class BanksTests {
         setup()
 
         transaction(database) {
-            assertNull(choose("unknown", 1000.0))
+            assertNull(service.choose("unknown", 1000.0))
         }
     }
 
@@ -266,7 +268,7 @@ class BanksTests {
         setup()
 
         transaction(database) {
-            val a = estimateCashback()
+            val a = service.estimateCashback()
 
             assertTrue { a.size == 3 }
 
@@ -279,11 +281,11 @@ class BanksTests {
             assertTrue { a[2].first.toDTO() == card3 }
             assertTrue { a[2].second == bank3.limit }
 
-            transaction(card.name, category.name, 1000.0)
-            transaction(card2.name, category4.name, 1000.0)
-            transaction(card3.name, category6.name, 1000.0)
+            service.transaction(card.name, category.name, 1000.0)
+            service.transaction(card2.name, category4.name, 1000.0)
+            service.transaction(card3.name, category6.name, 1000.0)
 
-            val b = estimateCashback()
+            val b = service.estimateCashback()
 
             assertTrue { b.size == 3 }
 

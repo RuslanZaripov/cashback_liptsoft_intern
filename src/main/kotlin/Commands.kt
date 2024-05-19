@@ -10,33 +10,33 @@ import org.example.domain.CardDTO
 import org.example.domain.CashbackCategoryDTO
 
 // add bank <name> [limit]
-class AddBank : Subcommand("add-bank", "Add bank to database") {
+class AddBank(private val service: CashbackService) : Subcommand("add-bank", "Add bank to database") {
     private val bankName by option(ArgType.String, "bank", "b", "bank name").required()
     private val limit by option(ArgType.Double, "limit", "l", "bank cashback limit").default(0.0)
 
     override fun execute(): Unit = runBlocking {
         println("add bank $bankName with limit $limit")
 
-        dbQuery { addBank(BankDTO(bankName, limit)) }
+        dbQuery { service.addBank(BankDTO(bankName, limit)) }
     }
 }
 
 
 // add card <bank name> <card name>
-class AddCard : Subcommand("add-card", "Add card to database") {
+class AddCard(private val service: CashbackService) : Subcommand("add-card", "Add card to database") {
     private val bankName by option(ArgType.String, "bank", "b", "bank name").required()
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
 
     override fun execute(): Unit = runBlocking {
         println("add card $cardName to $bankName")
 
-        dbQuery { addCard(CardDTO(cardName, bankName)) }
+        dbQuery { service.addCard(CardDTO(cardName, bankName)) }
     }
 }
 
 // add current-cashback <card name> <category> <percent> [permanent]
 // add future-cashback <card name> <category> <percent> [permanent]
-class AddCashback : Subcommand("add-cashback", "Add cashback category for card") {
+class AddCashback(private val service: CashbackService) : Subcommand("add-cashback", "Add cashback category for card") {
     private val period by option(ArgType.Choice(listOf("current", "future"), { it }), "period", "period").required()
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
     private val category by option(ArgType.String, "category", "category name").required()
@@ -48,12 +48,12 @@ class AddCashback : Subcommand("add-cashback", "Add cashback category for card")
         println("add category $category for $cardName with $percent [$permanent] $period")
 
         // TODO: add period
-        dbQuery { addCashback(CashbackCategoryDTO(category, percent, permanent, cardName, period)) }
+        dbQuery { service.addCashback(CashbackCategoryDTO(category, percent, permanent, cardName, period)) }
     }
 }
 
 // add transaction <card name> <category> <value>
-class AddTransaction : Subcommand("add-transaction", "Add transaction") {
+class AddTransaction(val service: CashbackService) : Subcommand("add-transaction", "Add transaction") {
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
     private val category by option(ArgType.String, "category", "category name").required()
     private val value by option(ArgType.Double, "value", "v", "transaction value").default(0.0)
@@ -61,30 +61,30 @@ class AddTransaction : Subcommand("add-transaction", "Add transaction") {
     override fun execute(): Unit = runBlocking {
         println("add transaction $cardName $category $value")
 
-        dbQuery { transaction(cardName, category, value) }
+        dbQuery { service.transaction(cardName, category, value) }
     }
 }
 
 // card list
-class CardList : Subcommand("card-list", "List all cards") {
+class CardList(private val service: CashbackService) : Subcommand("card-list", "List all cards") {
     override fun execute(): Unit = runBlocking {
         println("list cards")
 
-        dbQuery { listCards().forEach { println(it) } }
+        dbQuery { service.listCards().forEach { println(it) } }
     }
 }
 
 // estimate cashback
-class EstimateCashback : Subcommand("estimate-cashback", "Estimate cashback") {
+class EstimateCashback(val service: CashbackService) : Subcommand("estimate-cashback", "Estimate cashback") {
     override fun execute(): Unit = runBlocking {
         println("estimate cashback")
 
-        dbQuery { estimateCashback().forEach { println(it) } }
+        dbQuery { service.estimateCashback().forEach { println(it) } }
     }
 }
 
 // choose card <category> [value]
-class ChooseCard : Subcommand("choose-card", "Choose card") {
+class ChooseCard(private val service: CashbackService) : Subcommand("choose-card", "Choose card") {
     private val category by option(ArgType.String, "category", "c", "category name").required()
     private val value by option(ArgType.Double, "value", "v", "transaction value").default(0.0)
 
@@ -92,7 +92,7 @@ class ChooseCard : Subcommand("choose-card", "Choose card") {
         println("choose card $category $value")
 
         dbQuery {
-            val card = choose(category, value)
+            val card = service.choose(category, value)
             if (card != null) {
                 println(card)
             } else {
@@ -104,7 +104,7 @@ class ChooseCard : Subcommand("choose-card", "Choose card") {
 
 // remove current cashback <card name> <category>
 // remove future cashback <card name> <category>
-class RemoveCashback : Subcommand("remove-cashback", "Remove cashback") {
+class RemoveCashback(private val service: CashbackService) : Subcommand("remove-cashback", "Remove cashback") {
     private val period by option(ArgType.Choice(listOf("current", "future"), { it }), "period", "period").required()
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
     private val category by option(ArgType.String, "category", "category name").required()
@@ -112,6 +112,6 @@ class RemoveCashback : Subcommand("remove-cashback", "Remove cashback") {
     override fun execute(): Unit = runBlocking {
         println("remove cashback from $period $cardName $category")
 
-        dbQuery { removeCashback(cardName, period, category) }
+        dbQuery { service.removeCashback(cardName, period, category) }
     }
 }
