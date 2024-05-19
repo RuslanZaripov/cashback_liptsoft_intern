@@ -70,7 +70,7 @@ class CardList : Subcommand("card-list", "List all cards") {
     override fun execute(): Unit = runBlocking {
         println("list cards")
 
-        dbQuery { listCards() }
+        dbQuery { listCards().forEach { println(it) } }
     }
 }
 

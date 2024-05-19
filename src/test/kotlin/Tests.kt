@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
 import kotlin.test.assertFails
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.expect
 
@@ -217,6 +218,83 @@ class BanksTests {
             val calculated = bank.limit!! - value * (category.percent / 100)
 
             assertTrue { remainingLimit == calculated }
+        }
+    }
+
+    @Test
+    fun `test transaction with unknown card`() {
+        setup()
+
+        transaction(database) {
+            assertFails { transaction("unknown", category.name, 1000.0) }
+        }
+    }
+
+    @Test
+    fun `test transaction with unknown category`() {
+        setup()
+
+        transaction(database) {
+            assertFails { transaction(card.name, "unknown", 1000.0) }
+        }
+    }
+
+    @Test
+    fun `test choose card`() {
+        setup()
+
+        transaction(database) {
+            val actualCard = choose(category.name, 1000.0)
+            expect(card) { actualCard!!.toDTO() }
+
+            val actualCard2 = choose(category4.name, 1000.0)
+            expect(card2) { actualCard2!!.toDTO() }
+        }
+    }
+
+    @Test
+    fun `test choose card unknown category`() {
+        setup()
+
+        transaction(database) {
+            assertNull(choose("unknown", 1000.0))
+        }
+    }
+
+    @Test
+    fun `test estimate cashback`() {
+        setup()
+
+        transaction(database) {
+            val a = estimateCashback()
+
+            assertTrue { a.size == 3 }
+
+            assertTrue { a[0].first.toDTO() == card }
+            assertTrue { a[0].second == bank.limit }
+
+            assertTrue { a[1].first.toDTO() == card2 }
+            assertTrue { a[1].second == bank2.limit }
+
+            assertTrue { a[2].first.toDTO() == card3 }
+            assertTrue { a[2].second == bank3.limit }
+
+            transaction(card.name, category.name, 1000.0)
+            transaction(card2.name, category4.name, 1000.0)
+            transaction(card3.name, category6.name, 1000.0)
+
+            val b = estimateCashback()
+
+            assertTrue { b.size == 3 }
+
+            assertTrue { b[0].first.toDTO() == card }
+            assertTrue { b[0].second == bank.limit!! - 1000.0 * (category.percent / 100) }
+
+            assertTrue { b[1].first.toDTO() == card2 }
+            assertTrue { b[1].second == bank2.limit!! - 1000.0 * (category4.percent / 100) }
+
+            assertTrue { b[2].first.toDTO() == card3 }
+            assertTrue { b[2].second == bank3.limit!! - 1000.0 * (category6.percent / 100) }
         }
     }
 }
