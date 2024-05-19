@@ -7,10 +7,10 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 
 object Banks : IntIdTable() {
     val name = varchar("name", 50).uniqueIndex()
-    val limit = double("limit")
+    val limit = double("limit").nullable().default(null)
 }
 
-data class BankDTO(val name: String, val limit: Double)
+data class BankDTO(val name: String, val limit: Double?)
 
 class Bank(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Bank>(Banks)
@@ -19,7 +19,13 @@ class Bank(id: EntityID<Int>) : IntEntity(id) {
     var limit by Banks.limit
 
     override fun toString(): String =
-        "Bank(id=$id, name=$name, limit=$limit)"
+        "$name ${
+            if (limit == null) {
+                "no limit"
+            } else {
+                limit
+            }
+        })"
 }
 
 fun Bank.toDTO() = BankDTO(name, limit)

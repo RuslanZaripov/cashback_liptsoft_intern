@@ -1,3 +1,6 @@
+import org.example.addBank
+import org.example.addCard
+import org.example.addCashback
 import org.example.domain.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
