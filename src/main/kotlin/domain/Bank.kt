@@ -19,13 +19,7 @@ class Bank(id: EntityID<Int>) : IntEntity(id) {
     var limit by Banks.limit
 
     override fun toString(): String =
-        "$name ${
-            if (limit == null) {
-                "no limit"
-            } else {
-                limit
-            }
-        }"
+        "$name ${if (limit == null) "no limit" else limit}"
 }
 
 fun Bank.toDTO() = BankDTO(name, limit)

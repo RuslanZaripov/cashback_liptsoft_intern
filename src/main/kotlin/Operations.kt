@@ -1,6 +1,7 @@
 package org.example
 
 import org.example.domain.*
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
 import java.time.YearMonth
 
@@ -65,10 +66,7 @@ class CashbackService(
     fun removeCashback(cardName: String, period: String, categoryName: String) {
         val card = findCard(cardName)
 
-        val periodValue = getIntPeriod(period)
-
-        val category = getCashbackCategories(card)
-            .firstOrNull { it.name == categoryName && it.period == periodValue }
+        val category = getCashbackCategory(card, categoryName, period)
             ?: throw IllegalArgumentException("Category not found")
 
         category.delete()
@@ -84,7 +82,6 @@ class CashbackService(
 
         val cashback = (category.percent / 100) * value
 
-        // format time in yyyy-MM
         val period = monthProvider.getYearMonth().toString()
 
         spendMoney(card.bank.name, period, cashback)
@@ -99,8 +96,7 @@ class CashbackService(
             }
             .map { bank ->
                 bank.getCards()
-                    .filter { getCashbackCategories(it).isNotEmpty() } // maybe card has no cashback categories
-                    .toList()
+                    .filter { getCashbackCategories(it).isNotEmpty() }
             }
             .flatten()
             .map { card ->
@@ -147,6 +143,13 @@ class CashbackService(
 
     fun getCashbackCategories(card: Card) =
         CashbackCategory.find { CashbackCategories.card eq card.id }.toList()
+
+    private fun getCashbackCategory(card: Card, categoryName: String, period: String): CashbackCategory? =
+        CashbackCategory.find {
+            (CashbackCategories.card eq card.id) and
+                    (CashbackCategories.name eq categoryName) and
+                    (CashbackCategories.period eq getIntPeriod(period))
+        }.firstOrNull()
 
     fun getCurrentCashbackCategory(card: Card, categoryName: String): CashbackCategory? =
         getCashbackCategories(card)
