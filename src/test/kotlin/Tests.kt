@@ -2,6 +2,7 @@ import org.example.addBank
 import org.example.addCard
 import org.example.addCashback
 import org.example.domain.*
+import org.example.removeCashback
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -44,6 +45,8 @@ class BanksTests {
     private val category9 = CashbackCategoryDTO("ЖД билеты", 3.0, false, "Альфа МИР")
     private val category10 = CashbackCategoryDTO("Остальное", 1.0, true, "Альфа МИР")
 
+    private val categoryFuture = CashbackCategoryDTO("Рестораны", 5.0, false, "МИР", "future")
+
     @BeforeEach
     fun resetDB() {
         transaction(database) {
@@ -68,9 +71,7 @@ class BanksTests {
     @Test
     fun `test bank uniqueness`() {
         transaction(database) { addBank(bank) }
-        assertFails {
-            transaction(database) { addBank(bank) }
-        }
+        assertFails { transaction(database) { addBank(bank) } }
     }
 
     @Test
@@ -88,29 +89,80 @@ class BanksTests {
             addBank(bank)
             addCard(card)
         }
-        assertFails {
-            transaction(database) {
-                addCard(card)
-            }
-        }
+        assertFails { transaction(database) { addCard(card) } }
     }
 
     @Test
     fun `test card addition with non-existent bank`() {
-        assertFails {
-            transaction(database) {
-                addCard(card)
-            }
-        }
+        assertFails { transaction(database) { addCard(card) } }
     }
 
     @Test
-    fun `test cashback category addition`() {
+    fun `test current cashback category addition and remove`() {
         transaction(database) {
             addBank(bank)
 
             val card = addCard(card)
-            val category = addCashback(category)
+            addCashback(category)
+
+            var cardCategories = card.getCashbackCategories()
+
+            assertTrue { cardCategories.isNotEmpty() and (cardCategories.size == 1) }
+            expect(category) { cardCategories[0].toDTO() }
+
+            assertTrue { card.getCurrentCashbackCategory(category.name) != null }
+            expect(category) { card.getCurrentCashbackCategory(category.name)!!.toDTO() }
+
+            removeCashback(card.name, category.period, category.name)
+
+            cardCategories = card.getCashbackCategories()
+
+            assertTrue { cardCategories.isEmpty() }
+            assertTrue { card.getCurrentCashbackCategory(category.name) == null }
+        }
+    }
+
+    @Test
+    fun `test future cashback category addition and remove`() {
+        transaction(database) {
+            addBank(bank)
+
+            val card = addCard(card)
+            addCashback(categoryFuture)
+
+            var cardCategories = card.getCashbackCategories()
+
+            assertTrue { cardCategories.isNotEmpty() and (cardCategories.size == 1) }
+            expect(categoryFuture) { cardCategories[0].toDTO() }
+
+            assertTrue { card.getCurrentCashbackCategory(categoryFuture.name) == null }
+
+            removeCashback(card.name, categoryFuture.period, categoryFuture.name)
+
+            cardCategories = card.getCashbackCategories()
+
+            assertTrue { cardCategories.isEmpty() }
+            assertTrue { card.getCurrentCashbackCategory(categoryFuture.name) == null }
+        }
+    }
+
+    @Test
+    fun `test current cashback category uniqueness`() {
+        transaction(database) {
+            addBank(bank)
+            addCard(card)
+            addCashback(category)
+            assertFails { addCashback(category) }
+        }
+    }
+
+    @Test
+    fun `test current cashback uniqueness category addition`() {
+        transaction(database) {
+            addBank(bank)
+
+            val card = addCard(card)
+            val category = addCashback(category2)
 
             val cardCategories = card.getCashbackCategories()
 
@@ -118,6 +170,7 @@ class BanksTests {
             assertTrue { cardCategories[0].name == category.name }
             assertTrue { cardCategories[0].percent == category.percent }
             assertTrue { cardCategories[0].permanent == category.permanent }
+            assertTrue { cardCategories[0].period == category.period }
         }
     }
 }
