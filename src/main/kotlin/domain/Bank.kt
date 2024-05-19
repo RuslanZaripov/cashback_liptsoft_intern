@@ -34,11 +34,6 @@ fun findBank(bankName: String): Bank =
     Bank.find { Banks.name eq bankName }.firstOrNull()
         ?: throw IllegalArgumentException("Bank not found")
 
-fun modifyLimit(bankName: String, newLimit: Double) {
-    val bank = findBank(bankName)
-    bank.limit = newLimit
-}
-
 fun getAllBanks() = Bank.all().toList()
 
 fun Bank.getCards() =

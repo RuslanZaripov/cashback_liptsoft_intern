@@ -72,18 +72,38 @@ fun transaction(cardName: String, categoryName: String, value: Double) {
 
     val cashback = category.percent * value
 
-    val newLimit = limit - cashback
+    // format time in yyyy-MM
+    val period = LocalDate.now().toString().substring(0, 7)
 
-    modifyLimit(card.bank.name, newLimit)
+    spendMoney(card.bank.name, period, cashback)
 }
 
-fun estimateCashback() {
-    getAllBanks().forEach { println(it) }
+fun estimateCashback(): List<Pair<Card, Double?>> {
+    val period = LocalDate.now().toString().substring(0, 7)
+    return getAllBanks()
+        .filter {
+            val a = getRemainingLimit(it.name, period)
+            (a == null) || (a > 0.0)
+        }
+        .map { bank ->
+            bank.getCards()
+                .filter { it.getCashbackCategories().isNotEmpty() } // maybe card has no cashback categories
+                .toList()
+        }
+        .flatten()
+        .map { card ->
+            val remaining = getRemainingLimit(card.bank.name, period)
+            Pair(card, remaining)
+        }
 }
 
 fun choose(categoryName: String, value: Double): Card? {
+    val period = LocalDate.now().toString().substring(0, 7)
     return getAllBanks()
-        .filter { (it.limit != null) and (it.limit!! > value) }
+        .filter {
+            val a = getRemainingLimit(it.name, period)
+            (a == null) || (a >= value)
+        }
         .map { bank ->
             bank.getCards()
                 .filter { it.getCashbackCategories().any { category -> category.name == categoryName } }

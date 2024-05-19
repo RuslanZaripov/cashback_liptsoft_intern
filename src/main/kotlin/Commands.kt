@@ -79,7 +79,7 @@ class EstimateCashback : Subcommand("estimate-cashback", "Estimate cashback") {
     override fun execute(): Unit = runBlocking {
         println("estimate cashback")
 
-        dbQuery { estimateCashback() }
+        dbQuery { estimateCashback().forEach { println(it) } }
     }
 }
 
