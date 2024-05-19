@@ -57,13 +57,18 @@ fun estimateCashback() {
     getAllBanks().forEach { println(it) }
 }
 
-fun choose(categoryName: String, value: Double) {
-    TODO("Not yet implemented")
+fun choose(categoryName: String, value: Double): Card? {
+    return getAllBanks()
+        .filter { (it.limit != null) and (it.limit!! > value) }
+        .map { bank ->
+            bank.getCards()
+                .filter { it.getCashbackCategories().any { category -> category.name == categoryName } }
+        }
+        .flatten()
+        .maxByOrNull { it.getCashbackCategory(categoryName)!!.percent }
 }
 
 fun listCards() {
-    // iterate over banks and look for bank limit
-    // if bank limit is not zero then iterate over cards and print those cards which has cashback categories
     getAllBanks()
         .filter { it.limit != null }
         .forEach { bank ->

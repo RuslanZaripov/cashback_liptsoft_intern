@@ -91,7 +91,14 @@ class ChooseCard : Subcommand("choose-card", "Choose card") {
     override fun execute(): Unit = runBlocking {
         println("choose card $category $value")
 
-        dbQuery { choose(category, value) }
+        dbQuery {
+            val card = choose(category, value)
+            if (card != null) {
+                println(card)
+            } else {
+                println("No card found")
+            }
+        }
     }
 }
 
