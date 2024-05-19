@@ -63,5 +63,12 @@ fun choose(categoryName: String, value: Double) {
 
 fun listCards() {
     // iterate over banks and look for bank limit
-    // if bank limit is
+    // if bank limit is not zero then iterate over cards and print those cards which has cashback categories
+    getAllBanks()
+        .filter { it.limit != null }
+        .forEach { bank ->
+            bank.getCards()
+                .filter { it.getCashbackCategories().isNotEmpty() }
+                .forEach { println(it) }
+        }
 }

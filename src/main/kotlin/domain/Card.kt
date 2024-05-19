@@ -15,6 +15,8 @@ class Card(id: EntityID<Int>) : IntEntity(id) {
 
     var name by Cards.name
     var bank by Bank referencedOn Cards.bank
+
+    override fun toString(): String = "$name (${bank.name})"
 }
 
 data class CardDTO(val name: String, val bankName: String)

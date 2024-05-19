@@ -40,3 +40,8 @@ fun modifyLimit(bankName: String, newLimit: Double) {
 }
 
 fun getAllBanks() = Bank.all().toList()
+
+fun Bank.getCards() =
+    Card
+        .find { Cards.bank eq id }
+        .toList()
