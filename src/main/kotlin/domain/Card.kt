@@ -21,12 +21,6 @@ data class CardDTO(val name: String, val bankName: String)
 
 fun Card.toDTO() = CardDTO(name, bank.name)
 
-fun addCard(card: CardDTO) =
-    Card.new {
-        name = card.name
-        bank = findBank(card.bankName)
-    }
-
 fun findCard(cardName: String) =
     Card.find { Cards.name eq cardName }.firstOrNull()
         ?: throw IllegalArgumentException("Card not found")

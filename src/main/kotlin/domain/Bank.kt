@@ -24,12 +24,6 @@ class Bank(id: EntityID<Int>) : IntEntity(id) {
 
 fun Bank.toDTO() = BankDTO(name, limit)
 
-fun addBank(bank: BankDTO) =
-    Bank.new {
-        name = bank.name
-        limit = bank.limit
-    }
-
 fun findBank(bankName: String): Bank =
     Bank.find { Banks.name eq bankName }.firstOrNull()
         ?: throw IllegalArgumentException("Bank not found")

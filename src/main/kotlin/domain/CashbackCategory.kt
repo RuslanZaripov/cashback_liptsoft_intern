@@ -29,20 +29,3 @@ data class CashbackCategoryDTO(
     val permanent: Boolean,
     val cardName: String,
 )
-
-fun addCashback(category: CashbackCategoryDTO): CashbackCategory {
-    val card = findCard(category.cardName)
-
-    val categories = card.getCashbackCategories()
-
-    if (categories.any { it.name == category.name }) {
-        throw IllegalArgumentException("Category already exists")
-    }
-
-    return CashbackCategory.new {
-        name = category.name
-        percent = category.percent
-        permanent = category.permanent
-        cards = card
-    }
-}

@@ -5,7 +5,9 @@ package org.example
 import kotlinx.cli.*
 import kotlinx.coroutines.runBlocking
 import org.example.DatabaseSingleton.dbQuery
-import org.example.domain.*
+import org.example.domain.BankDTO
+import org.example.domain.CardDTO
+import org.example.domain.CashbackCategoryDTO
 
 // add bank <name> [limit]
 class AddBank : Subcommand("add-bank", "Add bank to database") {
@@ -14,6 +16,7 @@ class AddBank : Subcommand("add-bank", "Add bank to database") {
 
     override fun execute(): Unit = runBlocking {
         println("add bank $bankName with limit $limit")
+
         dbQuery { addBank(BankDTO(bankName, limit)) }
     }
 }
@@ -26,6 +29,7 @@ class AddCard : Subcommand("add-card", "Add card to database") {
 
     override fun execute(): Unit = runBlocking {
         println("add card $cardName to $bankName")
+
         dbQuery { addCard(CardDTO(cardName, bankName)) }
     }
 }
@@ -63,8 +67,10 @@ class AddTransaction : Subcommand("add-transaction", "Add transaction") {
 
 // card list
 class CardList : Subcommand("card-list", "List all cards") {
-    override fun execute() {
-        println("card list")
+    override fun execute(): Unit = runBlocking {
+        println("list cards")
+
+        dbQuery { listCards() }
     }
 }
 
@@ -72,6 +78,7 @@ class CardList : Subcommand("card-list", "List all cards") {
 class EstimateCashback : Subcommand("estimate-cashback", "Estimate cashback") {
     override fun execute(): Unit = runBlocking {
         println("estimate cashback")
+
         dbQuery { estimateCashback() }
     }
 }
@@ -81,8 +88,10 @@ class ChooseCard : Subcommand("choose-card", "Choose card") {
     private val category by option(ArgType.String, "category", "c", "category name").required()
     private val value by option(ArgType.Double, "value", "v", "transaction value").default(0.0)
 
-    override fun execute() {
+    override fun execute(): Unit = runBlocking {
         println("choose card $category $value")
+
+        dbQuery { choose(category, value) }
     }
 }
 
@@ -93,7 +102,9 @@ class RemoveCashback : Subcommand("remove-cashback", "Remove cashback") {
     private val cardName by option(ArgType.String, "card", "c", "card name").required()
     private val category by option(ArgType.String, "category", "category name").required()
 
-    override fun execute() {
+    override fun execute(): Unit = runBlocking {
         println("remove cashback from $period $cardName $category")
+
+        dbQuery { removeCashback(cardName, category) }
     }
 }
