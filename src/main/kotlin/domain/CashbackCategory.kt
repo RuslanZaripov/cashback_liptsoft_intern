@@ -8,14 +8,14 @@ import java.time.LocalDate
 
 
 object CashbackCategories : IntIdTable() {
+    val card = reference("card", Cards)
     val name = varchar("category", 50)
     val period = integer("period")
     val percent = double("percent")
     val permanent = bool("permanent")
-    val card = reference("card", Cards)
 
     init {
-        uniqueIndex(name, period)
+        uniqueIndex(card, name, period)
     }
 }
 

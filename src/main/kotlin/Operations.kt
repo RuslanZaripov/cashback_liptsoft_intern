@@ -70,7 +70,7 @@ fun transaction(cardName: String, categoryName: String, value: Double) {
     val category = card.getCurrentCashbackCategory(categoryName)
         ?: throw IllegalArgumentException("Category not found")
 
-    val cashback = category.percent * value
+    val cashback = (category.percent / 100) * value
 
     // format time in yyyy-MM
     val period = LocalDate.now().toString().substring(0, 7)
@@ -112,12 +112,16 @@ fun choose(categoryName: String, value: Double): Card? {
         .maxByOrNull { it.getCurrentCashbackCategory(categoryName)!!.percent }
 }
 
-fun listCards() {
-    getAllBanks()
-        .filter { it.limit != null }
-        .forEach { bank ->
+fun listCards(): List<Card> {
+    val period = LocalDate.now().toString().substring(0, 7)
+    return getAllBanks()
+        .filter {
+            val a = getRemainingLimit(it.name, period)
+            (a == null) || (a > 0.0)
+        }
+        .map { bank ->
             bank.getCards()
                 .filter { it.getCashbackCategories().isNotEmpty() }
-                .forEach { println(it) }
         }
+        .flatten()
 }

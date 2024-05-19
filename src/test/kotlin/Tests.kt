@@ -1,8 +1,5 @@
-import org.example.addBank
-import org.example.addCard
-import org.example.addCashback
+import org.example.*
 import org.example.domain.*
-import org.example.removeCashback
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -25,11 +22,13 @@ class BanksTests {
     private val bank = BankDTO("Тинькофф", 5000.0)
     private val bank2 = BankDTO("Банк Санкт-Петербург", 3000.0)
     private val bank3 = BankDTO("Альфа", 2000.0)
+    private val bank4 = BankDTO("Сбербанк", 0.0)
 
     private val card = CardDTO("МИР", "Тинькофф")
     private val card2 = CardDTO("Банк Санкт-Петербург", "Банк Санкт-Петербург")
     private val card3 = CardDTO("Альфа Кредитка", "Альфа")
-    private val card4 = CardDTO("Альфа Мир", "Альфа")
+    private val card4 = CardDTO("Альфа МИР", "Альфа")
+    private val card5 = CardDTO("СберКарта", "Сбербанк")
 
     private val category = CashbackCategoryDTO("Рестораны", 5.0, false, "МИР")
     private val category2 = CashbackCategoryDTO("Дом и Ремонт", 5.0, false, "МИР")
@@ -45,6 +44,8 @@ class BanksTests {
     private val category9 = CashbackCategoryDTO("ЖД билеты", 3.0, false, "Альфа МИР")
     private val category10 = CashbackCategoryDTO("Остальное", 1.0, true, "Альфа МИР")
 
+    private val category11 = CashbackCategoryDTO("Остальное", 1.0, true, "СберКарта")
+
     private val categoryFuture = CashbackCategoryDTO("Рестораны", 5.0, false, "МИР", "future")
 
     @BeforeEach
@@ -52,9 +53,11 @@ class BanksTests {
         transaction(database) {
             SchemaUtils.drop(CashbackCategories)
             SchemaUtils.drop(Cards)
+            SchemaUtils.drop(Expenditures)
             SchemaUtils.drop(Banks)
 
             SchemaUtils.create(Banks)
+            SchemaUtils.create(Expenditures)
             SchemaUtils.create(Cards)
             SchemaUtils.create(CashbackCategories)
         }
@@ -166,21 +169,54 @@ class BanksTests {
         }
     }
 
-    @Test
-    fun `test current cashback uniqueness category addition`() {
+    private fun setup() {
         transaction(database) {
             addBank(bank)
+            addBank(bank2)
+            addBank(bank3)
+            addBank(bank4)
 
-            val card = addCard(card)
-            val category = addCashback(category2)
+            addCard(card)
+            addCard(card2)
+            addCard(card3)
+            addCard(card4)
+            addCard(card5)
 
-            val cardCategories = card.getCashbackCategories()
+            addCashback(category)
+            addCashback(category2)
+            addCashback(category3)
+            addCashback(category4)
+            addCashback(category5)
+            addCashback(category6)
+            addCashback(category7)
+            addCashback(category11)
+        }
+    }
 
-            assertTrue { cardCategories.size == 1 }
-            assertTrue { cardCategories[0].name == category.name }
-            assertTrue { cardCategories[0].percent == category.percent }
-            assertTrue { cardCategories[0].permanent == category.permanent }
-            assertTrue { cardCategories[0].period == category.period }
+    @Test
+    fun `get card list`() {
+        setup()
+
+        transaction(database) {
+            val a = listCards()
+            assertTrue { a.size == 3 }
+        }
+    }
+
+    @Test
+    fun `test transaction`() {
+        setup()
+
+        transaction(database) {
+            val value = 1000.0
+
+            transaction(card.name, category.name, value)
+
+            val remainingLimit = getCurrentRemainingLimit(bank.name)
+
+            val calculated = bank.limit!! - value * (category.percent / 100)
+
+            assertTrue { remainingLimit == calculated }
         }
     }
 }

@@ -25,7 +25,7 @@ class Bank(id: EntityID<Int>) : IntEntity(id) {
             } else {
                 limit
             }
-        })"
+        }"
 }
 
 fun Bank.toDTO() = BankDTO(name, limit)

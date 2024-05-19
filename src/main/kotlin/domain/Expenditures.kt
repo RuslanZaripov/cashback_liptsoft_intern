@@ -4,6 +4,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
+import java.time.LocalDate
 
 // create table where will be store bak id, date and amount of expenditures
 // make primary key from bank id and date
@@ -23,7 +24,7 @@ fun spendMoney(bankName: String, time: String, amount: Double) {
     Expenditures.upsert {
         it[this.bank] = findBank(bankName).id
         it[this.time] = time
-        it[this.amount] = it[Expenditures.amount] + amount
+        it[this.amount] = it.getOrNull(Expenditures.amount) ?: (0.0 + amount)
     }
 }
 
@@ -34,4 +35,8 @@ fun getRemainingLimit(bankName: String, time: String): Double? {
         .selectAll().where { (Expenditures.bank eq bank.id) and (Expenditures.time eq time) }
         .sumOf { it[Expenditures.amount] }
     return bank.limit!! - expenditures
+}
+
+fun getCurrentRemainingLimit(bankName: String): Double? {
+    return getRemainingLimit(bankName, LocalDate.now().toString().substring(0, 7))
 }
